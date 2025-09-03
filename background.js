@@ -45,6 +45,11 @@ const createContextMenus = async () => {
       id: 'searchWith',
       title: '通过搜索引擎搜索',
       contexts: ['selection']
+    }, () => {
+      // 捕获可能的错误，但不中断流程
+      if (chrome.runtime.lastError) {
+        console.warn('创建主菜单项失败:', chrome.runtime.lastError.message);
+      }
     });
 
     // 获取搜索引擎列表并创建子菜单
