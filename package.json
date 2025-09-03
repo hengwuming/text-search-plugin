@@ -1,0 +1,13 @@
+{
+  "name": "text-search-plugin",
+  "version": "1.0.0",
+  "description": "Chrome浏览器文本搜索插件",
+  "type": "module",
+  "scripts": {
+    "build": "node build-crx.js",
+    "version": "node build-crx.js --version"
+  },
+  "devDependencies": {
+    "inquirer": "^9.2.11"
+  }
+}

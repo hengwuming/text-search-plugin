@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "文本搜索工具",
+  "version": "1.0",
+  "description": "选中文本后通过自定义搜索引擎进行搜索",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.svg",
+    "48": "icons/icon48.svg",
+    "128": "icons/icon128.svg"
+  }
+}
