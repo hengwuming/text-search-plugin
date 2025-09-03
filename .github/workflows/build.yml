@@ -1,0 +1,43 @@
+name: Build Chrome Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate private key if not provided
+        run: |
+          if [ -z "${{ secrets.EXTENSION_PRIVATE_KEY }}" ]; then
+            echo "No private key found in secrets. Generating a new one for this build..."
+            openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048
+          else
+            echo "${{ secrets.EXTENSION_PRIVATE_KEY }}" > key.pem
+          fi
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: text-search-plugin
+          path: dist/
+          retention-days: 14
