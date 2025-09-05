@@ -67,10 +67,16 @@ const loadAndDisplayEngines = async () => {
         tooltip.style.top = (e.pageY - 10) + 'px';
       });
 
+      // 创建删除按钮，但当只有一个搜索引擎时隐藏
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'delete-btn';
       deleteBtn.textContent = '删除';
       deleteBtn.addEventListener('click', () => deleteEngine(index));
+      
+      // 当只有一个搜索引擎时隐藏删除按钮
+      if (engines.length <= 1) {
+        deleteBtn.style.display = 'none';
+      }
 
       engineInfo.appendChild(engineName);
       engineInfo.appendChild(engineUrl);
@@ -220,11 +226,17 @@ const addEngine = async () => {
 
 // 删除搜索引擎
 const deleteEngine = async (index) => {
-  if (confirm('确定要删除这个搜索引擎吗？')) {
-    try {
-      const result = await chrome.storage.sync.get('searchEngines');
-      const engines = result.searchEngines || [];
+  try {
+    const result = await chrome.storage.sync.get('searchEngines');
+    const engines = result.searchEngines || [];
 
+    // 如果只剩一个搜索引擎，则不允许删除
+    if (engines.length <= 1) {
+      alert('最少需要保留一个搜索引擎，不能全部删除');
+      return;
+    }
+
+    if (confirm('确定要删除这个搜索引擎吗？')) {
       if (index >= 0 && index < engines.length) {
         engines.splice(index, 1);
         await chrome.storage.sync.set({ searchEngines: engines });
@@ -233,103 +245,22 @@ const deleteEngine = async (index) => {
         // 通知后台更新菜单
         chrome.runtime.sendMessage({ action: 'refreshContextMenus' });
       }
-    } catch (error) {
-      console.error('删除搜索引擎失败:', error);
-      alert('删除失败，请重试');
-    }
-  }
-};
-
-// 加载当前图标
-const loadCurrentIcon = async () => {
-  try {
-    const result = await chrome.storage.sync.get('customIcon');
-    const currentIconElement = document.getElementById('currentIcon');
-
-    if (result.customIcon) {
-      currentIconElement.src = result.customIcon;
-    } else {
-      currentIconElement.src = 'icons/icon128.svg';
     }
   } catch (error) {
-    console.error('加载图标失败:', error);
+    console.error('删除搜索引擎失败:', error);
+    alert('删除失败，请重试');
   }
 };
 
-// 处理图标上传
-const handleIconUpload = async (file) => {
-  if (!file) return;
 
-  // 检查文件类型是否为图片
-  if (!file.type.startsWith('image/')) {
-    alert('请选择图片文件');
-    return;
-  }
-
-  // 读取文件并转换为Data URL
-  const reader = new FileReader();
-  reader.onload = async (event) => {
-    try {
-      const iconDataUrl = event.target.result;
-      await chrome.storage.sync.set({ customIcon: iconDataUrl });
-
-      // 更新预览
-      document.getElementById('currentIcon').src = iconDataUrl;
-
-      // 通知后台更新图标
-      chrome.runtime.sendMessage({
-        action: 'updateExtensionIcon',
-        iconDataUrl: iconDataUrl
-      });
-
-      alert('图标已更新');
-    } catch (error) {
-      console.error('保存图标失败:', error);
-      alert('图标更新失败，请重试');
-    }
-  };
-  reader.readAsDataURL(file);
-};
-
-// 恢复默认图标
-const resetToDefaultIcon = async () => {
-  if (confirm('确定要恢复默认图标吗？')) {
-    try {
-      // 从存储中删除自定义图标
-      await chrome.storage.sync.remove('customIcon');
-
-      // 更新预览
-      document.getElementById('currentIcon').src = 'icons/icon128.svg';
-
-      // 通知后台更新图标
-      chrome.runtime.sendMessage({ action: 'resetExtensionIcon' });
-
-      alert('已恢复默认图标');
-    } catch (error) {
-      console.error('恢复默认图标失败:', error);
-      alert('恢复失败，请重试');
-    }
-  }
-};
 
 // 添加事件监听器
 document.addEventListener('DOMContentLoaded', () => {
   // 加载并显示搜索引擎列表
   loadAndDisplayEngines();
 
-  // 加载当前图标
-  loadCurrentIcon();
-
   // 添加按钮点击事件
   document.getElementById('addEngineBtn').addEventListener('click', addEngine);
-
-  // 图标上传事件
-  document.getElementById('iconInput').addEventListener('change', (e) => {
-    handleIconUpload(e.target.files[0]);
-  });
-
-  // 恢复默认图标事件
-  document.getElementById('resetIconBtn').addEventListener('click', resetToDefaultIcon);
 
   // 监听键盘事件（回车添加）
   document.getElementById('engineName').addEventListener('keypress', (e) => {
