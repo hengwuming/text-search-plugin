@@ -1,15 +1,3 @@
-// 创建提示工具
-const createTooltip = () => {
-  let tooltip = document.getElementById('urlTooltip');
-  if (!tooltip) {
-    tooltip = document.createElement('div');
-    tooltip.id = 'urlTooltip';
-    tooltip.className = 'tooltip';
-    document.body.appendChild(tooltip);
-  }
-  return tooltip;
-};
-
 // 加载搜索引擎列表并显示
 const loadAndDisplayEngines = async () => {
   const engineListElement = document.getElementById('engineList');
@@ -23,9 +11,6 @@ const loadAndDisplayEngines = async () => {
       engineListElement.innerHTML = '<p style="color: #999;">暂无搜索引擎，请添加</p>';
       return;
     }
-
-    // 创建提示工具
-    const tooltip = createTooltip();
 
     engines.forEach((engine, index) => {
       const engineItem = document.createElement('div');
@@ -49,23 +34,6 @@ const loadAndDisplayEngines = async () => {
       engineUrl.className = 'engine-url';
       engineUrl.textContent = engine.url;
       engineUrl.setAttribute('title', engine.url);
-
-      // 添加URL悬停显示功能
-      engineUrl.addEventListener('mouseenter', (e) => {
-        tooltip.textContent = engine.url;
-        tooltip.style.display = 'block';
-        tooltip.style.left = (e.pageX + 10) + 'px';
-        tooltip.style.top = (e.pageY - 10) + 'px';
-      });
-
-      engineUrl.addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
-      });
-
-      engineUrl.addEventListener('mousemove', (e) => {
-        tooltip.style.left = (e.pageX + 10) + 'px';
-        tooltip.style.top = (e.pageY - 10) + 'px';
-      });
 
       // 创建删除按钮，但当只有一个搜索引擎时隐藏
       const deleteBtn = document.createElement('button');
