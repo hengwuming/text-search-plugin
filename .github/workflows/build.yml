@@ -32,8 +32,8 @@ jobs:
             echo "${{ secrets.EXTENSION_PRIVATE_KEY }}" > key.pem
           fi
 
-      - name: Build extension
-        run: npm run version
+      - name: Build extension with auto version increment
+        run: npm run ci-version
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

@@ -86,8 +86,8 @@ async function updateManifestJsonVersion(newVersion) {
   }
 }
 
-// 处理版本控制
-async function handleVersionControl() {
+// 自动递增小版本号（用于CI/CD环境）
+async function autoIncrementMinorVersion() {
   try {
     // 获取当前版本号
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
@@ -95,64 +95,10 @@ async function handleVersionControl() {
     
     console.log(`当前版本号: ${currentVersion}`);
     
-    // 询问用户版本更新方式
-    const answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'versionType',
-        message: '请选择版本更新方式:',
-        choices: [
-          { name: `增加大版本号 (${incrementMajorVersion(currentVersion)})`, value: 'major' },
-          { name: `增加小版本号 (${incrementMinorVersion(currentVersion)})`, value: 'minor' },
-          { name: '自定义版本号', value: 'custom' }
-        ]
-      },
-      {
-        type: 'input',
-        name: 'customVersion',
-        message: '请输入自定义版本号:',
-        when: (answers) => answers.versionType === 'custom',
-        validate: (input) => {
-          // 简单验证版本号格式
-          const versionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?$/;
-          if (!versionRegex.test(input)) {
-            return '请输入有效的版本号，格式如: 1.0 或 1.1.0';
-          }
-          return true;
-        }
-      }
-    ]);
+    // 自动递增小版本号
+    const newVersion = incrementMinorVersion(currentVersion);
     
-    // 确定新版本号
-    let newVersion;
-    switch (answers.versionType) {
-      case 'major':
-        newVersion = incrementMajorVersion(currentVersion);
-        break;
-      case 'minor':
-        newVersion = incrementMinorVersion(currentVersion);
-        break;
-      case 'custom':
-        newVersion = answers.customVersion;
-        break;
-      default:
-        throw new Error('未知的版本更新方式');
-    }
-    
-    // 确认版本更新
-    const confirm = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirmUpdate',
-        message: `确定要将版本号从 ${currentVersion} 更新为 ${newVersion} 吗？`,
-        default: true
-      }
-    ]);
-    
-    if (!confirm.confirmUpdate) {
-      console.log('已取消版本更新');
-      return false;
-    }
+    console.log(`自动递增小版本号: ${currentVersion} -> ${newVersion}`);
     
     // 更新版本号
     await updatePackageJsonVersion(newVersion);
@@ -160,6 +106,95 @@ async function handleVersionControl() {
     
     console.log(`版本号已成功更新为: ${newVersion}`);
     return true;
+  } catch (error) {
+    console.error(`自动递增版本号时出错: ${error.message}`);
+    throw error;
+  }
+}
+
+// 处理版本控制
+async function handleVersionControl() {
+  try {
+    // 检查是否在CI环境中或指定了自动模式
+    const isCI = process.env.CI || process.argv.includes('--auto');
+    
+    if (isCI) {
+      // CI环境中自动递增小版本号
+      return await autoIncrementMinorVersion();
+    } else {
+      // 本地开发环境中使用交互式版本控制
+      // 获取当前版本号
+      const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const currentVersion = packageJson.version;
+      
+      console.log(`当前版本号: ${currentVersion}`);
+      
+      // 询问用户版本更新方式
+      const answers = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'versionType',
+          message: '请选择版本更新方式:',
+          choices: [
+            { name: `增加大版本号 (${incrementMajorVersion(currentVersion)})`, value: 'major' },
+            { name: `增加小版本号 (${incrementMinorVersion(currentVersion)})`, value: 'minor' },
+            { name: '自定义版本号', value: 'custom' }
+          ]
+        },
+        {
+          type: 'input',
+          name: 'customVersion',
+          message: '请输入自定义版本号:',
+          when: (answers) => answers.versionType === 'custom',
+          validate: (input) => {
+            // 简单验证版本号格式
+            const versionRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?$/;
+            if (!versionRegex.test(input)) {
+              return '请输入有效的版本号，格式如: 1.0 或 1.1.0';
+            }
+            return true;
+          }
+        }
+      ]);
+      
+      // 确定新版本号
+      let newVersion;
+      switch (answers.versionType) {
+        case 'major':
+          newVersion = incrementMajorVersion(currentVersion);
+          break;
+        case 'minor':
+          newVersion = incrementMinorVersion(currentVersion);
+          break;
+        case 'custom':
+          newVersion = answers.customVersion;
+          break;
+        default:
+          throw new Error('未知的版本更新方式');
+      }
+      
+      // 确认版本更新
+      const confirm = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'confirmUpdate',
+          message: `确定要将版本号从 ${currentVersion} 更新为 ${newVersion} 吗？`,
+          default: true
+        }
+      ]);
+      
+      if (!confirm.confirmUpdate) {
+        console.log('已取消版本更新');
+        return false;
+      }
+      
+      // 更新版本号
+      await updatePackageJsonVersion(newVersion);
+      await updateManifestJsonVersion(newVersion);
+      
+      console.log(`版本号已成功更新为: ${newVersion}`);
+      return true;
+    }
   } catch (error) {
     console.error(`处理版本控制时出错: ${error.message}`);
     throw error;
