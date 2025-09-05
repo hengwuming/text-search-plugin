@@ -40,48 +40,30 @@ const createContextMenus = async () => {
   });
 
   try {
-    // 获取搜索引擎列表并创建一级菜单项
+    // 获取搜索引擎列表并创建菜单项
     const engines = await loadSearchEngines();
     
-    // 如果有多个搜索引擎，创建一个主菜单用于整理
-    if (engines.length > 1) {
-      chrome.contextMenus.create({
-        id: 'searchWith',
-        title: '通过搜索引擎搜索',
-        contexts: ['selection']
-      }, () => {
-        // 捕获可能的错误，但不中断流程
-        if (chrome.runtime.lastError) {
-          console.warn('创建主菜单项失败:', chrome.runtime.lastError.message);
+    // 根据搜索引擎数量决定显示方式
+    if (engines.length > 0) {
+      // 所有搜索引擎都作为一级菜单直接显示
+      engines.forEach(engine => {
+        // 检查engine.id是否存在
+        if (engine.id) {
+          chrome.contextMenus.create({
+            id: engine.id,
+            title: `${engine.name}搜索`,
+            contexts: ['selection']
+          }, () => {
+            // 捕获可能的错误，但不中断流程
+            if (chrome.runtime.lastError) {
+              console.warn('创建菜单项失败:', engine.id, chrome.runtime.lastError.message);
+            }
+          });
+        } else {
+          console.warn('跳过无效的搜索引擎项（缺少ID）:', engine);
         }
       });
     }
-    
-    engines.forEach(engine => {
-      // 检查engine.id是否存在
-      if (engine.id) {
-        // 构建菜单项配置
-        const menuConfig = {
-          id: engine.id,
-          title: `${engine.name}搜索`,
-          contexts: ['selection']
-        };
-        
-        // 如果有多个搜索引擎，将第一个作为一级菜单，其余放入二级菜单
-        if (engines.length > 1 && engines.indexOf(engine) > 0) {
-          menuConfig.parentId = 'searchWith';
-        }
-        
-        chrome.contextMenus.create(menuConfig, () => {
-          // 捕获可能的错误，但不中断流程
-          if (chrome.runtime.lastError) {
-            console.warn('创建菜单项失败:', engine.id, chrome.runtime.lastError.message);
-          }
-        });
-      } else {
-        console.warn('跳过无效的搜索引擎项（缺少ID）:', engine);
-      }
-    });
   } catch (error) {
     console.error('创建菜单失败:', error);
   }
