@@ -275,8 +275,11 @@ function createZipFile() {
     // 将所有文件路径连接成一个字符串
     const filesToZip = includeFiles.join(' ');
     
-    // 直接创建ZIP文件，只包含指定的文件
-    execSync(`cd ${extensionRoot} && zip -r ${outputZipPath} ${filesToZip}`, {
+    // 计算相对路径，确保ZIP文件内部不包含多余的目录结构
+    const relativeZipPath = path.relative(extensionRoot, outputZipPath);
+    
+    // 在扩展根目录下执行zip命令，使用相对路径创建ZIP文件
+    execSync(`cd ${extensionRoot} && zip -r "${relativeZipPath}" ${filesToZip}`, {
       stdio: 'inherit'
     });
     
