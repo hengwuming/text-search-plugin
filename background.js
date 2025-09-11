@@ -52,7 +52,8 @@ const createContextMenus = async () => {
           chrome.contextMenus.create({
             id: engine.id,
             title: `${engine.name}搜索`,
-            contexts: ['selection']
+            contexts: ['selection'],
+            parentId: null // 明确设置为null，确保是顶级菜单项
           }, () => {
             // 捕获可能的错误，但不中断流程
             if (chrome.runtime.lastError) {
