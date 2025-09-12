@@ -278,8 +278,8 @@ function createZipFile() {
     // 计算相对路径，确保ZIP文件内部不包含多余的目录结构
     const relativeZipPath = path.relative(extensionRoot, outputZipPath);
     
-    // 在扩展根目录下执行zip命令，使用相对路径创建ZIP文件
-    execSync(`cd ${extensionRoot} && zip -r "${relativeZipPath}" ${filesToZip}`, {
+    // 在扩展根目录下执行zip命令，使用相对路径创建ZIP文件，并排除dist目录和zip文件
+    execSync(`cd ${extensionRoot} && zip -r "${relativeZipPath}" ${filesToZip} -x "dist/*" "*.zip"`, {
       stdio: 'inherit'
     });
     
