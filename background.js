@@ -42,7 +42,7 @@ const createContextMenus = async () => {
   try {
     // 获取搜索引擎列表并创建菜单项
     const engines = await loadSearchEngines();
-    
+
     // 根据搜索引擎数量决定显示方式
     if (engines.length > 0) {
       // 所有搜索引擎都作为一级菜单直接显示
@@ -52,8 +52,7 @@ const createContextMenus = async () => {
           chrome.contextMenus.create({
             id: engine.id,
             title: `${engine.name}搜索`,
-            contexts: ['selection'],
-            parentId: null // 明确设置为null，确保是顶级菜单项
+            contexts: ['selection']
           }, () => {
             // 捕获可能的错误，但不中断流程
             if (chrome.runtime.lastError) {
